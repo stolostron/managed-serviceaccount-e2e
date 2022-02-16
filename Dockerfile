@@ -29,4 +29,4 @@ COPY --from=builder $REMOTE_SOURCE_DIR/app/pkg/tests/placeholder/placeholder.tes
 VOLUME /results
 WORKDIR "/test"
 
-CMD ["/bin/bash", "-c", "ginkgo placeholder/placeholder.test -- --ginkgo.trace --ginkgo.v --ginkgo.junit-report=/results/result-managed-serviceaccount-placeholder.xml"]
+CMD ["/bin/bash", "-c", "ginkgo placeholder/placeholder.test -- --ginkgo.trace --ginkgo.v --ginkgo.junit-report=/results/result-managed-serviceaccount-placeholder.xml; sed -i 's/\\[It\\] *//g' /results/result-managed-serviceaccount-placeholder.xml"]
