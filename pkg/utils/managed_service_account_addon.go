@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	addonv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
@@ -106,36 +105,86 @@ func GetMultiClusterEngine(
 }
 
 func EnableManagedServiceAccountFeature(hubClient dynamic.Interface) error {
-	name := ""
-	namespace := ""
-	gvr := gvrMCH
-	patch := fmt.Sprintf(
-		`[{"op":"%s","path":"%s","value":%s}]`,
-		"add", "/spec/componentConfig", `{"managedServiceAccount":{"enable":true}}`,
-	)
-	// try mch
-	if mch, err := GetMultiClusterHub(hubClient); err != nil {
+	// currently we can only update MCE, comment the logic of updating MCH until it works
+	// name := ""
+	// namespace := ""
+	// gvr := gvrMCH
+	// patchMCH := fmt.Sprintf(
+	// 	`[{"op":"%s","path":"%s","value":%s}]`,
+	// 	"add", "/spec/componentConfig", `{"managedServiceAccount":{"enable":true}}`,
+	// )
+	// // try mch
+	// if mch, err := GetMultiClusterHub(hubClient); err != nil {
+	// 	return err
+	// } else if mch == nil {
+	// 	// if not exist, try mce
+	// 	mce, err := GetMultiClusterEngine(hubClient)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	name = mce.GetName()
+	// 	namespace = ""
+	// 	gvr = gvrMCE
+	// } else {
+	// 	name = mch.GetName()
+	// 	namespace = mch.GetNamespace()
+	// 	_, err := hubClient.Resource(gvr).Namespace(namespace).Patch(context.TODO(), name, types.JSONPatchType, []byte(patchMCH), metav1.PatchOptions{})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	mce, err := GetMultiClusterEngine(hubClient)
+	if err != nil {
 		return err
-	} else if mch == nil {
-		// if not exist, try mce
-		mce, err := GetMultiClusterEngine(hubClient)
-		if err != nil {
-			return err
-		}
-		name = mce.GetName()
-		namespace = ""
-		gvr = gvrMCE
-	} else {
-		name = mch.GetName()
-		namespace = mch.GetNamespace()
 	}
-
-	_, err := hubClient.Resource(gvr).Namespace(namespace).Patch(context.TODO(), name, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})
+	namespace := ""
+	gvr := gvrMCE
+	err = SetManagedServiceAcccountInMCE(mce, true)
+	if err != nil {
+		return err
+	}
+	_, err = hubClient.Resource(gvr).Namespace(namespace).Update(context.TODO(), mce, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
+}
 
+func SetManagedServiceAcccountInMCE(mce *unstructured.Unstructured, state bool) error {
+	components, ok, err := unstructured.NestedSlice(mce.Object, "spec", "components")
+	if !ok {
+		return fmt.Errorf("failed to get spec.components in %v", mce)
+	}
+	if err != nil {
+		return err
+	}
+	idx := -1
+	elem := map[string]interface{}{
+		"enabled": state,
+		"name":    "managed-service-account",
+	}
+	for i, c := range components {
+		component, ok := c.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected format for component %v expecting it to be a map[string]interface{}", component)
+		}
+		if name, ok := component["name"]; ok && name == elem["name"] {
+			idx = i
+		}
+	}
+	// modify components
+	if idx < 0 {
+		// append
+		components = append(components, elem)
+	} else {
+		// update
+		components[idx] = elem
+	}
+	err = unstructured.SetNestedSlice(mce.Object, components, "spec", "components")
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetManagedServiceAccountAddon(
