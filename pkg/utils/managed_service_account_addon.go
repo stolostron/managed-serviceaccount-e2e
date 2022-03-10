@@ -105,55 +105,43 @@ func GetMultiClusterEngine(
 }
 
 func EnableManagedServiceAccountFeature(hubClient dynamic.Interface) error {
-	// currently we can only update MCE, comment the logic of updating MCH until it works
-	// name := ""
-	// namespace := ""
-	// gvr := gvrMCH
-	// patchMCH := fmt.Sprintf(
-	// 	`[{"op":"%s","path":"%s","value":%s}]`,
-	// 	"add", "/spec/componentConfig", `{"managedServiceAccount":{"enable":true}}`,
-	// )
-	// // try mch
-	// if mch, err := GetMultiClusterHub(hubClient); err != nil {
-	// 	return err
-	// } else if mch == nil {
-	// 	// if not exist, try mce
-	// 	mce, err := GetMultiClusterEngine(hubClient)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	name = mce.GetName()
-	// 	namespace = ""
-	// 	gvr = gvrMCE
-	// } else {
-	// 	name = mch.GetName()
-	// 	namespace = mch.GetNamespace()
-	// 	_, err := hubClient.Resource(gvr).Namespace(namespace).Patch(context.TODO(), name, types.JSONPatchType, []byte(patchMCH), metav1.PatchOptions{})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	// modify mce first, and then modify mch
+	// this way even if mce change is rejected by mch-operator, we will still modify mch to make sure it works
 	mce, err := GetMultiClusterEngine(hubClient)
 	if err != nil {
 		return err
 	}
-	namespace := ""
-	gvr := gvrMCE
-	err = SetManagedServiceAcccountInMCE(mce, true)
+	err = SetManagedServiceAcccount(mce, true)
 	if err != nil {
 		return err
 	}
-	_, err = hubClient.Resource(gvr).Namespace(namespace).Update(context.TODO(), mce, metav1.UpdateOptions{})
+	_, err = hubClient.Resource(gvrMCE).Namespace("").Update(context.TODO(), mce, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
+	// modify mch if found
+	mch, err := GetMultiClusterHub(hubClient)
+	if mch == nil || (err != nil && errors.IsNotFound(err)) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	err = SetManagedServiceAcccount(mch, true)
+	if err != nil {
+		return err
+	}
+	_, err = hubClient.Resource(gvrMCH).Namespace(mch.GetNamespace()).Update(context.TODO(), mch, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func SetManagedServiceAcccountInMCE(mce *unstructured.Unstructured, state bool) error {
-	components, ok, err := unstructured.NestedSlice(mce.Object, "spec", "components")
+func SetManagedServiceAcccount(m *unstructured.Unstructured, state bool) error {
+	components, ok, err := unstructured.NestedSlice(m.Object, "spec", "components")
 	if !ok {
-		return fmt.Errorf("failed to get spec.components in %v", mce)
+		return fmt.Errorf("failed to get spec.components in %v", m)
 	}
 	if err != nil {
 		return err
@@ -180,7 +168,7 @@ func SetManagedServiceAcccountInMCE(mce *unstructured.Unstructured, state bool) 
 		// update
 		components[idx] = elem
 	}
-	err = unstructured.SetNestedSlice(mce.Object, components, "spec", "components")
+	err = unstructured.SetNestedSlice(m.Object, components, "spec", "components")
 	if err != nil {
 		return err
 	}
