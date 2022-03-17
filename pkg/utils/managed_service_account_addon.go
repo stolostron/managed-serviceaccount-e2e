@@ -139,7 +139,7 @@ func EnableManagedServiceAccountFeature(hubClient dynamic.Interface) error {
 }
 
 func SetManagedServiceAcccount(m *unstructured.Unstructured, state bool) error {
-	components, ok, err := unstructured.NestedSlice(m.Object, "spec", "components")
+	components, ok, err := unstructured.NestedSlice(m.Object, "spec", "overrides", "components")
 	if !ok {
 		return fmt.Errorf("failed to get spec.components in %v", m)
 	}
@@ -168,7 +168,7 @@ func SetManagedServiceAcccount(m *unstructured.Unstructured, state bool) error {
 		// update
 		components[idx] = elem
 	}
-	err = unstructured.SetNestedSlice(m.Object, components, "spec", "components")
+	err = unstructured.SetNestedSlice(m.Object, components, "spec", "overrides", "components")
 	if err != nil {
 		return err
 	}
