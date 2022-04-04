@@ -149,7 +149,7 @@ func SetManagedServiceAcccount(m *unstructured.Unstructured, state bool) error {
 	idx := -1
 	elem := map[string]interface{}{
 		"enabled": state,
-		"name":    "managed-service-account",
+		"name":    "managedserviceaccount-preview",
 	}
 	for i, c := range components {
 		component, ok := c.(map[string]interface{})
