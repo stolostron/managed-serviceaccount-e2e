@@ -40,7 +40,7 @@ var _ = Describe("e2e", Ordered, func() {
 		mcClient, err = clients.GetManagedClusterDynamicClient(managedCluster.Name)
 		Expect(err).Should(BeNil())
 	})
-	It("[P1][Sev1][server-foundation] able to enable managed-serviceaccount addon on hub", func() {
+	It("[P1][Sev1][cluster-lifecycle] able to enable managed-serviceaccount addon on hub", func() {
 		By("Enabling ManagedServiceAccount feature in MCH/MCE")
 		err := utils.EnableManagedServiceAccountFeature(hubClient)
 		Expect(err).Should(BeNil(), "fail to enable the feature")
@@ -59,7 +59,7 @@ var _ = Describe("e2e", Ordered, func() {
 
 	})
 
-	It("[P1][Sev1][server-foundation] able to install managed-serviceaccount addon on managed clusters", func() {
+	It("[P1][Sev1][cluster-lifecycle] able to install managed-serviceaccount addon on managed clusters", func() {
 		// check if managed-serviceaccount addon is already enabled
 		managedServiceAccountAddon, err := utils.GetManagedServiceAccountAddon(hubClient, managedCluster)
 		// skip this test if already enabled
@@ -86,7 +86,7 @@ var _ = Describe("e2e", Ordered, func() {
 		}, time.Minute*5, time.Second*10).Should(BeTrue())
 	})
 
-	It("[P1][Sev1][server-foundation] able to create managed-serviceaccount", func() {
+	It("[P1][Sev1][cluster-lifecycle] able to create managed-serviceaccount", func() {
 		By("creating a ManagedServiceAccount in ManagedCluster namespace")
 		//create managed serviceaccount
 		createdManagedServiceAccount, err := utils.CreateManagedServiceAccount(
@@ -111,7 +111,7 @@ var _ = Describe("e2e", Ordered, func() {
 		managedServiceAccountName = createdManagedServiceAccount.Name
 	})
 
-	It("[P1][Sev1][server-foundation] managed serviceaccount should generated valid token secret", func() {
+	It("[P1][Sev1][cluster-lifecycle] managed serviceaccount should generated valid token secret", func() {
 		token, err := utils.GetManagedServiceAccountToken(
 			hubClient,
 			managedCluster,
@@ -131,7 +131,7 @@ var _ = Describe("e2e", Ordered, func() {
 		Expect(utils.ValidateManagedServiceAccountToken(mcClient, token, username)).Should(BeTrue())
 	})
 
-	It("[P1][Sev1][server-foundation] able to delete managed-serviceaccount", func() {
+	It("[P1][Sev1][cluster-lifecycle] able to delete managed-serviceaccount", func() {
 		//managed-serviceaccount addon shouldnt already be installed
 		managedServiceAccount, err := utils.GetManagedServiceAccount(hubClient, managedCluster, managedServiceAccountName)
 		Expect(err).Should(BeNil())
@@ -147,7 +147,7 @@ var _ = Describe("e2e", Ordered, func() {
 		}, time.Minute*5, time.Second*10).Should(BeFalse())
 	})
 
-	It("[P1][Sev1][server-foundation] able to disable managed-serviceaccount addon", func() {
+	It("[P1][Sev1][cluster-lifecycle] able to disable managed-serviceaccount addon", func() {
 		//managed-serviceaccount addon shouldnt already be installed
 		managedServiceAccountAddon, err := utils.GetManagedServiceAccountAddon(hubClient, managedCluster)
 		Expect(err).Should(BeNil())
