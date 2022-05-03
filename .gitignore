@@ -12,6 +12,9 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
 
 results
+
+pkg/tests/e2e/resources/options.yaml
+pkg/tests/e2e/resources/container_options.yaml

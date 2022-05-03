@@ -1,0 +1,10 @@
+options:
+  owner: owner
+  hub:
+    name: hub-cluster
+    kubeconfig: /tmp/hub
+    kubecontext: admin
+  clusters:
+  - name: kind
+    kubecontext: kind-kind
+    kubeconfig: /tmp/kind

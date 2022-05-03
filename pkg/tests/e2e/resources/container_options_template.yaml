@@ -1,0 +1,10 @@
+options:
+  owner: owner
+  hub:
+    name: hub-cluster
+    kubeconfig: /opt/.kube/config
+    kubecontext: admin
+  clusters:
+  - name: kind
+    kubecontext: kind-kind
+    kubeconfig: /opt/.kube/import-kubeconfig

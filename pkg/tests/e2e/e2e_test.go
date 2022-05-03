@@ -35,6 +35,7 @@ var _ = Describe("e2e", Ordered, func() {
 		//find a managed cluster to do the test on
 		managedCluster, err = utils.GetImportedCluster(hubClient)
 		Expect(err).Should(BeNil())
+		Expect(managedCluster).ShouldNot(BeNil())
 
 		//initialize managedcluster dynamic client
 		mcClient, err = clients.GetManagedClusterDynamicClient(managedCluster.Name)
