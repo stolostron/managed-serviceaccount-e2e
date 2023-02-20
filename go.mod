@@ -1,6 +1,6 @@
 module github.com/stolostron/managed-serviceaccount-e2e
 
-go 1.17
+go 1.19
 
 require (
 	github.com/onsi/ginkgo/v2 v2.1.3
