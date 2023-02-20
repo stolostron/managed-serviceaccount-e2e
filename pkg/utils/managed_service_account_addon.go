@@ -221,7 +221,7 @@ func CreateManagedServiceAccountAddon(
 				Namespace: managedCluster.Name,
 			},
 			Spec: addonv1alpha1.ManagedClusterAddOnSpec{
-				InstallNamespace: "open-cluster-management-managed-serviceaccount",
+				InstallNamespace: "open-cluster-management-agent-addon",
 			},
 		}
 
