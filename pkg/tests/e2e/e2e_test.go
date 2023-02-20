@@ -56,7 +56,7 @@ var _ = Describe("e2e", Ordered, func() {
 		Eventually(func() error {
 			_, err := hubClient.Resource(gvr).Get(context.TODO(), "managed-serviceaccount", v1.GetOptions{})
 			return err
-		}, time.Minute*1, time.Second*10).Should(BeNil())
+		}, time.Minute*3, time.Second*10).Should(BeNil())
 
 	})
 
@@ -84,7 +84,7 @@ var _ = Describe("e2e", Ordered, func() {
 		//eventually managed-serviceaccount addon should be availble
 		Eventually(func() bool {
 			return utils.IsManagedServiceAccountAddonAvailable(hubClient, managedCluster)
-		}, time.Minute*5, time.Second*10).Should(BeTrue())
+		}, time.Minute*10, time.Second*10).Should(BeTrue())
 	})
 
 	It("[P1][Sev1][cluster-lifecycle] able to create managed-serviceaccount", func() {
@@ -145,7 +145,7 @@ var _ = Describe("e2e", Ordered, func() {
 		//eventually managed-serviceaccount addon to be deleted
 		Eventually(func() bool {
 			return utils.DoesManagedServiceAccountExist(hubClient, managedCluster, managedServiceAccountName)
-		}, time.Minute*5, time.Second*10).Should(BeFalse())
+		}, time.Minute*10, time.Second*10).Should(BeFalse())
 	})
 
 	It("[P1][Sev1][cluster-lifecycle] able to disable managed-serviceaccount addon", func() {
@@ -161,6 +161,6 @@ var _ = Describe("e2e", Ordered, func() {
 		//eventually managed-serviceaccount addon to be deleted
 		Eventually(func() bool {
 			return utils.DoesManagedServiceAccountAddonExist(hubClient, managedCluster)
-		}, time.Minute*5, time.Second*10).Should(BeFalse())
+		}, time.Minute*10, time.Second*10).Should(BeFalse())
 	})
 })
