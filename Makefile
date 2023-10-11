@@ -54,7 +54,7 @@ run:
 
 .PHONY: build
 build:
-	go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.3
+	go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.13.0
 	ginkgo build pkg/tests/e2e
 
 .PHONY: build-image

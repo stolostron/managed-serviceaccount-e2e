@@ -7,7 +7,7 @@ COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
 WORKDIR $REMOTE_SOURCE_DIR/app
 
 # compile go tests in build image
-RUN go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.1.3
+RUN go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.13.0
 RUN go get github.com/onsi/gomega/...
 RUN ginkgo build pkg/tests/e2e
 
