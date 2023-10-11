@@ -30,7 +30,14 @@ cd managed-serviceaccount-e2e
 cp pkg/tests/e2e/resources/options_template.yaml pkg/tests/e2e/resources/options.yaml
 ```
 
-3. run testing:
+3. build tests:
+
+From the project root:
+```
+make build
+```
+
+4. run tests:
 
 From the project root:
 ```

@@ -16,13 +16,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
-	msav1alpha1 "open-cluster-management.io/managed-serviceaccount/api/v1alpha1"
+	msav1beta1 "open-cluster-management.io/managed-serviceaccount/apis/authentication/v1beta1"
 )
 
 func unstructuredToManagedServiceAccount(
 	u *unstructured.Unstructured,
-) (*msav1alpha1.ManagedServiceAccount, error) {
-	msa := &msav1alpha1.ManagedServiceAccount{}
+) (*msav1beta1.ManagedServiceAccount, error) {
+	msa := &msav1beta1.ManagedServiceAccount{}
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(
 		u.UnstructuredContent(),
 		msa,
@@ -37,7 +37,7 @@ func GetManagedServiceAccount(
 	hubClient dynamic.Interface,
 	managedCluster *clusterv1.ManagedCluster,
 	name string,
-) (*msav1alpha1.ManagedServiceAccount, error) {
+) (*msav1beta1.ManagedServiceAccount, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    "authentication.open-cluster-management.io",
 		Version:  "v1alpha1",
@@ -62,7 +62,7 @@ func GetManagedServiceAccount(
 func ListManagedServiceAccount(
 	hubClient dynamic.Interface,
 	managedCluster *clusterv1.ManagedCluster,
-) (*msav1alpha1.ManagedServiceAccountList, error) {
+) (*msav1beta1.ManagedServiceAccountList, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    "authentication.open-cluster-management.io",
 		Version:  "v1alpha1",
@@ -87,8 +87,8 @@ func ListManagedServiceAccount(
 
 func unstructuredListToManagedServiceAccountList(
 	uList *unstructured.UnstructuredList,
-) (*msav1alpha1.ManagedServiceAccountList, error) {
-	msaList := &msav1alpha1.ManagedServiceAccountList{}
+) (*msav1beta1.ManagedServiceAccountList, error) {
+	msaList := &msav1beta1.ManagedServiceAccountList{}
 	for _, u := range uList.Items {
 		msa, err := unstructuredToManagedServiceAccount(&u)
 		if err != nil {
@@ -103,14 +103,14 @@ func CreateManagedServiceAccount(
 	hubClient dynamic.Interface,
 	managedCluster *clusterv1.ManagedCluster,
 	namePrefix string,
-) (*msav1alpha1.ManagedServiceAccount, error) {
+) (*msav1beta1.ManagedServiceAccount, error) {
 	gvr := schema.GroupVersionResource{
 		Group:    "authentication.open-cluster-management.io",
 		Version:  "v1alpha1",
 		Resource: "managedserviceaccounts",
 	}
 
-	newManagedServiceAccount := &msav1alpha1.ManagedServiceAccount{
+	newManagedServiceAccount := &msav1beta1.ManagedServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ManagedServiceAccount",
 			APIVersion: "authentication.open-cluster-management.io/v1alpha1",
@@ -119,8 +119,8 @@ func CreateManagedServiceAccount(
 			GenerateName: namePrefix,
 			Namespace:    managedCluster.Name,
 		},
-		Spec: msav1alpha1.ManagedServiceAccountSpec{
-			Rotation: msav1alpha1.ManagedServiceAccountRotation{
+		Spec: msav1beta1.ManagedServiceAccountSpec{
+			Rotation: msav1beta1.ManagedServiceAccountRotation{
 				Enabled: true,
 				Validity: metav1.Duration{
 					Duration: time.Hour,
@@ -184,11 +184,11 @@ func IsManagedServiceAccountComplete(
 
 	for _, condition := range managedServiceAccount.Status.Conditions {
 		switch condition.Type {
-		case msav1alpha1.ConditionTypeSecretCreated:
+		case msav1beta1.ConditionTypeSecretCreated:
 			if condition.Status == metav1.ConditionTrue {
 				secretCreated = true
 			}
-		case msav1alpha1.ConditionTypeTokenReported:
+		case msav1beta1.ConditionTypeTokenReported:
 			if condition.Status == metav1.ConditionTrue {
 				tokenReported = true
 			}
@@ -305,7 +305,11 @@ func GetManagedServiceAccountUserName(
 		return "", err
 	}
 
-	name := fmt.Sprintf("system:serviceaccount:%s:%s", managedServiceAccountAddon.Spec.InstallNamespace, managedServiceAccountName)
+	ns := managedServiceAccountAddon.Status.Namespace
+	if ns == "" {
+		ns = "open-cluster-management-agent-addon"
+	}
+	name := fmt.Sprintf("system:serviceaccount:%s:%s", ns, managedServiceAccountName)
 
 	return name, nil
 }
@@ -350,12 +354,13 @@ func ValidateManagedServiceAccountToken(
 		return false, err
 	}
 
-	if createdTokenReview.Status.Authenticated == false {
+	if !createdTokenReview.Status.Authenticated {
 		return false, fmt.Errorf("fail to authenticate")
 	}
 
 	if createdTokenReview.Status.User.Username != expectedUserName {
-		return false, fmt.Errorf("username does not match %s", expectedUserName)
+		return false, fmt.Errorf("username %s does not match %s",
+			createdTokenReview.Status.User.Username, expectedUserName)
 	}
 
 	return true, nil
