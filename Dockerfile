@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/stolostron/builder:go1.19-linux AS builder
+FROM registry.ci.openshift.org/stolostron/builder:go1.21-linux AS builder
 
 ARG REMOTE_SOURCE
 ARG REMOTE_SOURCE_DIR
@@ -7,7 +7,7 @@ COPY $REMOTE_SOURCE $REMOTE_SOURCE_DIR/app/
 WORKDIR $REMOTE_SOURCE_DIR/app
 
 # compile go tests in build image
-RUN go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.13.0
+RUN go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo@v2.15.0
 RUN go get github.com/onsi/gomega/...
 RUN ginkgo build pkg/tests/e2e
 
