@@ -105,8 +105,8 @@ func GetMultiClusterEngine(
 }
 
 func EnableManagedServiceAccountFeature(hubClient dynamic.Interface) error {
-	// modify mce first, and then modify mch
-	// this way even if mce change is rejected by mch-operator, we will still modify mch to make sure it works
+	// can only modify mce to enable managedserviceaccount
+	// modify mch will be rejected by admission webhook multiclusterhub.validating-webhook.open-cluster-management.io.
 	mce, err := GetMultiClusterEngine(hubClient)
 	if err != nil {
 		return err
@@ -116,26 +116,7 @@ func EnableManagedServiceAccountFeature(hubClient dynamic.Interface) error {
 		return err
 	}
 	_, err = hubClient.Resource(gvrMCE).Namespace("").Update(context.TODO(), mce, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-	// modify mch if found
-	mch, err := GetMultiClusterHub(hubClient)
-	if mch == nil || (err != nil && errors.IsNotFound(err)) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-	err = SetManagedServiceAcccount(mch, true)
-	if err != nil {
-		return err
-	}
-	_, err = hubClient.Resource(gvrMCH).Namespace(mch.GetNamespace()).Update(context.TODO(), mch, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func SetManagedServiceAcccount(m *unstructured.Unstructured, state bool) error {
@@ -149,7 +130,7 @@ func SetManagedServiceAcccount(m *unstructured.Unstructured, state bool) error {
 	idx := -1
 	elem := map[string]interface{}{
 		"enabled": state,
-		"name":    "managedserviceaccount-preview",
+		"name":    "managedserviceaccount",
 	}
 	for i, c := range components {
 		component, ok := c.(map[string]interface{})

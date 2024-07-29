@@ -42,7 +42,7 @@ var _ = Describe("e2e", Ordered, func() {
 		Expect(err).Should(BeNil())
 	})
 	It("[P1][Sev1][cluster-lifecycle] able to enable managed-serviceaccount addon on hub", func() {
-		By("Enabling ManagedServiceAccount feature in MCH/MCE")
+		By("Enabling ManagedServiceAccount feature in MCE")
 		err := utils.EnableManagedServiceAccountFeature(hubClient)
 		Expect(err).Should(BeNil(), "fail to enable the feature")
 
